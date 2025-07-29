@@ -8,6 +8,7 @@ const ejsMate = require("ejs-mate");
 const Listing = require("./models/listings.js");
 const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/ExpressError.js");
+const {listingSchema} = require("./schema.js")
 
 const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
 
@@ -66,7 +67,13 @@ app.get("/listings/:id", wrapAsync(async (req, res) => {
 
 // Create Listing
 app.post("/listings", wrapAsync(async (req, res) => {
+ let result= listingSchema.validate(req.body);
+ console.log(result);
+ if(result.error){
+  throw new ExpressError(400,result.error);
+ }
   const newListing = new Listing(req.body.listing);
+  
   await newListing.save();
   res.redirect("/listings");
 }));
@@ -87,15 +94,16 @@ app.delete("/listings/:id", wrapAsync(async (req, res) => {
   res.redirect("/listings");
 }));
 /*
-// 404 Handler
+// ✅ 404 Handler
 app.all("*", (req, res, next) => {
   next(new ExpressError(404, "Page Not Found"));
-});*/
-
-// Error Handling Middleware
+});
+*/
+// ✅ Error Handling Middleware (corrected)
 app.use((err, req, res, next) => {
-  const { statusCode = 500, message = "Something went wrong!" } = err;
-  res.status(statusCode).send(message);
+  const { statusCode = 500 } = err;
+  if (!err.message) err.message = "Something went wrong!";
+  res.status(statusCode).render("error.ejs", { err });
 });
 
 // Server
