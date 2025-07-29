@@ -16,5 +16,10 @@
     "url": "https://github.com/Muskan1415/WanderLust/issues"
   },
   "homepage": "https://github.com/Muskan1415/WanderLust#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "ejs-mate": "^4.0.0",
+    "method-override": "^3.0.0",
+    "mongoose": "^8.16.5"
+  }
 }

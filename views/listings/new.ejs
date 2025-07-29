@@ -1,0 +1,107 @@
+<% layout('/layouts/boilerplate') %>
+
+<br><br>
+<div class="row mt-3">
+  <div class="col-8 offset-2">
+    <div class="container mt-5">
+      <h3 class="mb-4">Create a New Listing</h3>
+
+      <form method="POST" action="/listings" novalidate class="needs-validation">
+        
+        <!-- Title -->
+        <div class="mb-3">
+          <label for="title" class="form-label">Title</label>
+          <input
+            name="listing[title]"
+            id="title"
+            placeholder="Add catchy title"
+            type="text"
+            class="form-control"
+            required
+          />
+          <div class="valid-feedback">Title looks good!</div>
+        </div>
+
+        <!-- Description -->
+        <div class="mb-3">
+          <label for="description" class="form-label">Description</label>
+          <textarea
+            name="listing[description]"
+            id="description"
+            placeholder="Enter description"
+            class="form-control"
+            rows="3"
+            required
+          ></textarea>
+          <div class="invalid-feedback">Please enter a short description</div>
+        </div>
+
+        <!-- ✅ Image URL (nested field for object support) -->
+        <div class="mb-3">
+          <label for="image" class="form-label">Image URL</label>
+          <input
+            name="listing[image][url]"
+            id="image"
+            placeholder="Paste image URL"
+            type="text"
+            class="form-control"
+            required
+          />
+        </div>
+
+        <!-- Hidden Image filename (optional, static for now) -->
+        <input type="hidden" name="listing[image][filename]" value="listingimage" />
+
+        <div class="row">
+          <!-- Price -->
+          <div class="mb-3 col-md-4">
+            <label for="price" class="form-label">Price (₹)</label>
+            <input
+              name="listing[price]"
+              id="price"
+              placeholder="1200"
+              type="number"
+              class="form-control"
+              min="0"
+              required
+            />
+            <div class="invalid-feedback">Please enter a valid price</div>
+          </div>
+
+          <!-- Country -->
+          <div class="mb-3 col-md-8">
+            <label for="country" class="form-label">Country</label>
+            <input
+              name="listing[country]"
+              id="country"
+              placeholder="India"
+              type="text"
+              class="form-control"
+              required
+            />
+            <div class="invalid-feedback">Please enter a valid country name</div>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="mb-3">
+          <label for="location" class="form-label">Location</label>
+          <input
+            name="listing[location]"
+            id="location"
+            placeholder="Jaipur, Rajasthan"
+            type="text"
+            class="form-control"
+            required
+          />
+          <div class="invalid-feedback">Please enter a valid location</div>
+        </div>
+
+        <!-- Submit Button -->
+        <button class="btn btn-dark add-btn mt-3" type="submit">Add Listing</button>
+      </form>
+
+      <br><br>
+    </div>
+  </div>
+</div>
