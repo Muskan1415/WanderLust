@@ -1,5 +1,4 @@
 const express = require("express");
-const app = express();
 const mongoose = require("mongoose");
 const path = require("path");
 const methodOverride = require("method-override");
@@ -11,7 +10,7 @@ const ExpressError = require("./utils/ExpressError.js");
 const {listingSchema} = require("./schema.js")
 
 const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
-
+const app = express();
 // DB Connection
 main()
   .then(() => console.log("✅ Connected to DB"))
@@ -24,15 +23,24 @@ async function main() {
 // App Config
 app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
+app.use(express.urlencoded({ extended: true }));
+app.set("views", path.join(__dirname, "views"));
 app.use(express.static(path.join(__dirname, "public")));
 
 // Root Route
 app.get("/", (req, res) => {
   res.send("Hi, I am root");
 });
+
+const validateListing=(req,res,next)=>{
+   const { error } = listingSchema.validate(req.body);
+  if (error) {
+    throw new ExpressError(400, error.message); // better error string
+    next();
+  }
+
+}
 
 // =======================
 //       Routes
@@ -66,14 +74,9 @@ app.get("/listings/:id", wrapAsync(async (req, res) => {
 }));
 
 // Create Listing
-app.post("/listings", wrapAsync(async (req, res) => {
- let result= listingSchema.validate(req.body);
- console.log(result);
- if(result.error){
-  throw new ExpressError(400,result.error);
- }
+app.post("/listings",Listing.validate, wrapAsync(async (req, res) => {
+ 
   const newListing = new Listing(req.body.listing);
-  
   await newListing.save();
   res.redirect("/listings");
 }));
@@ -108,5 +111,5 @@ app.use((err, req, res, next) => {
 
 // Server
 app.listen(8080, () => {
-  console.log("🚀 Server running on port 8080");
+  console.log(`🚀 Server running on port http://localhost:8080`);
 });

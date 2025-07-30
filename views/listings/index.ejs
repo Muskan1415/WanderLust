@@ -9,17 +9,17 @@
         <a href="/listings/<%= listing._id %>" style="text-decoration: none; color: inherit;" class="listing-link">
           <div class="card h-100">
             <img 
-              src="<%= listing.image.url %>" 
+              src="<%= listing.image && listing.image.url ? listing.image.url : '/images/default.jpg' %>" 
               class="card-img-top" 
               alt="<%= listing.title %> image" 
               loading="lazy"
             >
             <div class="card-img-overlay"></div>
             <div class="card-body">
-              <h5 class="card-title fw-bold"><%= listing.title %></h5>
+              <h5 class="card-title fw-bold"><%= listing.title || 'Untitled' %></h5>
               <p class="card-text">
-                ₹<%= listing.price.toLocaleString("en-IN") %> /night <br>
-                Location: <%= listing.location %>
+                ₹<%= typeof listing.price === 'number' ? listing.price.toLocaleString("en-IN") : "N/A" %> /night <br>
+                Location: <%= listing.location || "Unknown" %>
               </p>
             </div>
           </div>
