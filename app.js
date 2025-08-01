@@ -7,7 +7,8 @@ const ejsMate = require("ejs-mate");
 const Listing = require("./models/listings.js");
 const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/ExpressError.js");
-const {listingSchema} = require("./schema.js")
+const {listingSchema,reviewSchema} = require("./schema.js")
+const Review= require("./models/review.js")
 
 const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
 const app = express();
@@ -28,15 +29,29 @@ app.use(express.urlencoded({ extended: true }));
 app.set("views", path.join(__dirname, "views"));
 app.use(express.static(path.join(__dirname, "public")));
 
+
 // Root Route
 app.get("/", (req, res) => {
   res.send("Hi, I am root");
 });
 
 const validateListing=(req,res,next)=>{
-   const { error } = listingSchema.validate(req.body);
+   let { error } = listingSchema.validate(req.body);
   if (error) {
+    let errMsg= error.details.map((el) => el.message).join(",");
     throw new ExpressError(400, error.message); // better error string
+    
+  }else{
+    next();
+  }
+};
+const validateReview=(req,res,next)=>{
+   let { error } = reviewSchema.validate(req.body);
+  if (error) {
+    let errMsg= error.details.map((el) => el.message).join(",");
+    throw new ExpressError(400, error.message); // better error string
+    
+  }else{
     next();
   }
 
@@ -74,7 +89,7 @@ app.get("/listings/:id", wrapAsync(async (req, res) => {
 }));
 
 // Create Listing
-app.post("/listings",Listing.validate, wrapAsync(async (req, res) => {
+app.post("/listings",validateListing, wrapAsync(async (req, res) => {
  
   const newListing = new Listing(req.body.listing);
   await newListing.save();
@@ -96,6 +111,31 @@ app.delete("/listings/:id", wrapAsync(async (req, res) => {
   if (!deletedListing) throw new ExpressError(404, "Listing not found for deletion");
   res.redirect("/listings");
 }));
+//Reviews ---Post Route
+/*app.post("listings/:id/review",async(req,res)=>{
+ let listing= await Listing.findById(req.params.id);
+ let newReview= new Review(req.body.review);
+
+ listing.reviews.push(newReview);
+
+ await newReview.save();
+ await listing.save();
+
+ console.log("new review saved");
+ res.send("new review saved");
+})*/
+app.post("/listings/:id/reviews",validateReview, wrapAsync(async (req, res) => {
+  let listing = await Listing.findById(req.params.id);
+  let newReview = new Review(req.body.review);
+  listing.reviews.push(newReview);
+  await newReview.save();
+  await listing.save();
+
+  console.log("new review saved");
+//res.send("new review saved");
+  res.redirect(`/listings/${listing._id}`);
+}));
+
 /*
 // ✅ 404 Handler
 app.all("*", (req, res, next) => {
