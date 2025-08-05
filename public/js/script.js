@@ -1,3 +1,4 @@
+console.log(" Custom JS Loaded!");
 (() => {
     'use strict'
   
