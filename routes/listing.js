@@ -1,83 +1,66 @@
+// ==============================
+// 1. IMPORTS & CONFIGURATION
+// ==============================
 const express = require("express");
 const router = express.Router();
+const wrapAsync = require("../utils/wrapAsync.js");
+const { isLoggedIn, isOwner, validateListing } = require("../middleware.js");
+const listingController = require("../controllers/listings.js");
+const multer = require("multer");
 
-const wrapAsync = require("../utils/wrapAsync");
-const ExpressError = require("../utils/ExpressError");
-const { listingSchema } = require("../schema.js");
-const Listing = require("../models/listings.js");
+// ---------------- CLOUD CONFIG COMMENTED ----------------
+// const { storage } = require("../cloudConfig.js");
+// const upload = multer({ storage });
+// ---------------------------------------------------------
 
-// Validation Middleware
-const validateListing = (req, res, next) => {
-  let { error } = listingSchema.validate(req.body);
-  if (error) {
-    let errMsg = error.details.map((el) => el.message).join(",");
-    throw new ExpressError(400, errMsg);
-  } else {
-    next();
-  }
-};
+// If you still want to upload files locally without cloud:
+// const upload = multer({ dest: 'uploads/' }); // optional
 
-// Index Route
-router.get("/", wrapAsync(async (req, res) => {
-  const allListings = await Listing.find({});
-  res.render("listings/index.ejs", { allListings });
-}));
+//Index Route
+router
+  .route("/")
+  .get(wrapAsync(listingController.index))
+  .post(
+    isLoggedIn,
+    // upload.single("listing[image]"), // comment if not using cloud
+    validateListing,
+    wrapAsync(listingController.createListing)
+  );
 
-// New Listing Form (optional if needed)
-router.get("/new", (req, res) => {
-  res.render("listings/new.ejs");
-});
+// 3. FORM TO CREATE NEW LISTING
+router.get("/new", isLoggedIn, listingController.renderNewForm);
 
-// Edit Listing Form (put before show route)
-router.get("/:id/edit", wrapAsync(async (req, res) => {
-  const { id } = req.params;
-  const listing = await Listing.findById(id);
-  if (!listing) throw new ExpressError(404, "Listing not found for editing");
-  res.render("listings/edit.ejs", { listing });
-}));
+// 4. FILTER & SEARCH ROUTES
+router.get("/filter/:id", wrapAsync(listingController.filter));
+router.get("/search", listingController.search);
 
-// Show Route
-/*router.get("/:id", wrapAsync(async (req, res) => {
-  const { id } = req.params;
-  const listing = await Listing.findById(id).populate("reviews");
-  if (!listing) throw new ExpressError(404, "Listing not found");
-  res.render("listings/show.ejs", { listing });
-}));*/
+// 5. INDIVIDUAL LISTING ROUTES (SHOW, UPDATE, DELETE)
+router
+  .route("/:id")
+  .get(wrapAsync(listingController.showListing))
+  .put(
+    isLoggedIn,
+    isOwner,
+    // upload.single("listing[image]"), // comment if not using cloud
+    validateListing,
+    wrapAsync(listingController.updateListing)
+  )
+  .delete(isLoggedIn, isOwner, wrapAsync(listingController.destroyListing));
+
+// 6. EDIT LISTING FORM
 router.get(
-  "/:id",
-  wrapAsync(async (req, res) => {
-    let { id } = req.params;
-    const listing = await Listing.findById(id).populate("reviews");
-    if (!listing) {
-      req.flash("error", "Listing you requested for does not exist!");
-      res.redirect("/listings");
-    }
-    res.render("listings/show.ejs", { listing });
-  })
+  "/:id/edit",
+  isLoggedIn,
+  isOwner,
+  wrapAsync(listingController.renderEditForm)
 );
 
-// Create Listing
-router.post("/", validateListing, wrapAsync(async (req, res) => {
-  const newListing = new Listing(req.body.listing);
-  await newListing.save();
-  req.flash("success", "New Listing Created!");
-  res.redirect("/listings");
-}));
+// 7. RESERVE A LISTING
+router.get(
+  "/:id/reservelisting",
+  isLoggedIn,
+  wrapAsync(listingController.reserveListing)
+);
 
-// Update Listing
-router.put("/:id", validateListing, wrapAsync(async (req, res) => {
-  const { id } = req.params;
-  const updatedListing = await Listing.findByIdAndUpdate(id, { ...req.body.listing });
-  if (!updatedListing) throw new ExpressError(404, "Listing not found for update");
-  res.redirect(`/listings/${id}`);
-}));
-
-// Delete Listing
-router.delete("/:id", wrapAsync(async (req, res) => {
-  const { id } = req.params;
-  const deletedListing = await Listing.findByIdAndDelete(id);
-  if (!deletedListing) throw new ExpressError(404, "Listing not found for deletion");
-  res.redirect("/listings");
-}));
-
+// 8. EXPORT ROUTER
 module.exports = router;
