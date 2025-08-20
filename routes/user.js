@@ -5,6 +5,8 @@ const wrapAsync = require("../utils/wrapAsync");
 const passport = require("passport");
 const { saveRedirectUrl } = require("../middleware");
 
+const userController= require("../controllers/users.js")
+
 // ----------------- SIGNUP -----------------
 router.get("/signup", (req, res) => {
     res.render("users/signup.ejs");
